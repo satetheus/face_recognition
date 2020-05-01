@@ -141,12 +141,34 @@ def face_locations(img, number_of_times_to_upsample=1, model="hog"):
         bottom, left) order
     """
     if model == "cnn":
-        return [_trim_css_to_bounds(_rect_to_css(face.rect), img.shape) for face in _raw_face_locations(img, number_of_times_to_upsample, "cnn")]
+        return [
+            _trim_css_to_bounds(
+                _rect_to_css(face.rect),
+                img.shape
+            ) for face in _raw_face_locations(
+                img,
+                number_of_times_to_upsample,
+                "cnn"
+            )
+        ]
     else:
-        return [_trim_css_to_bounds(_rect_to_css(face), img.shape) for face in _raw_face_locations(img, number_of_times_to_upsample, model)]
+        return [
+            _trim_css_to_bounds(
+                _rect_to_css(face),
+                img.shape
+            ) for face in _raw_face_locations(
+                img,
+                number_of_times_to_upsample,
+                model
+            )
+        ]
 
 
-def _raw_face_locations_batched(images, number_of_times_to_upsample=1, batch_size=128):
+def _raw_face_locations_batched(
+        images,
+        number_of_times_to_upsample=1,
+        batch_size=128
+    ):
     """
     Returns an 2d array of dlib rects of human faces in a image using the cnn
     face detector
@@ -156,7 +178,11 @@ def _raw_face_locations_batched(images, number_of_times_to_upsample=1, batch_siz
         looking for faces. Higher numbers find smaller faces.
     :return: A list of dlib 'rect' objects of found face locations
     """
-    return cnn_face_detector(images, number_of_times_to_upsample, batch_size=batch_size)
+    return cnn_face_detector(
+        images,
+        number_of_times_to_upsample,
+        batch_size=batch_size
+    )
 
 
 def batch_face_locations(images, number_of_times_to_upsample=1, batch_size=128):
@@ -174,9 +200,16 @@ def batch_face_locations(images, number_of_times_to_upsample=1, batch_size=128):
         bottom, left) order
     """
     def convert_cnn_detections_to_css(detections):
-        return [_trim_css_to_bounds(_rect_to_css(face.rect), images[0].shape) for face in detections]
+        return [
+            _trim_css_to_bounds(_rect_to_css(face.rect),
+            images[0].shape) for face in detections
+        ]
 
-    raw_detections_batched = _raw_face_locations_batched(images, number_of_times_to_upsample, batch_size)
+    raw_detections_batched = _raw_face_locations_batched(
+        images,
+        number_of_times_to_upsample,
+        batch_size
+    )
 
     return list(map(convert_cnn_detections_to_css, raw_detections_batched))
 
@@ -185,14 +218,21 @@ def _raw_face_landmarks(face_image, face_locations=None, model="large"):
     if face_locations is None:
         face_locations = _raw_face_locations(face_image)
     else:
-        face_locations = [_css_to_rect(face_location) for face_location in face_locations]
+        face_locations = [
+            _css_to_rect(face_location) for face_location in face_locations
+        ]
 
     pose_predictor = pose_predictor_68_point
 
     if model == "small":
         pose_predictor = pose_predictor_5_point
 
-    return [pose_predictor(face_image, face_location) for face_location in face_locations]
+    return [
+        pose_predictor(
+            face_image,
+            face_location
+        ) for face_location in face_locations
+    ]
 
 
 def face_landmarks(face_image, face_locations=None, model="large"):
@@ -207,7 +247,9 @@ def face_landmarks(face_image, face_locations=None, model="large"):
     :return: A list of dicts of face feature locations (eyes, nose, etc)
     """
     landmarks = _raw_face_landmarks(face_image, face_locations, model)
-    landmarks_as_tuples = [[(p.x, p.y) for p in landmark.parts()] for landmark in landmarks]
+    landmarks_as_tuples = [
+        [(p.x, p.y) for p in landmark.parts()] for landmark in landmarks
+    ]
 
     # For a definition of each point index, see:
     # https://cdn-images-1.medium.com/max/1600/1*AbEg31EgkbXSQehuNJBlWg.png
@@ -220,8 +262,19 @@ def face_landmarks(face_image, face_locations=None, model="large"):
             "nose_tip": points[31:36],
             "left_eye": points[36:42],
             "right_eye": points[42:48],
-            "top_lip": points[48:55] + [points[64]] + [points[63]] + [points[62]] + [points[61]] + [points[60]],
-            "bottom_lip": points[54:60] + [points[48]] + [points[60]] + [points[67]] + [points[66]] + [points[65]] + [points[64]]
+            "top_lip": points[48:55] + \
+                [points[64]] + \
+                [points[63]] + \
+                [points[62]] + \
+                [points[61]] + \
+                [points[60]],
+            "bottom_lip": points[54:60] + \
+                [points[48]] + \
+                [points[60]] + \
+                [points[67]] + \
+                [points[66]] + \
+                [points[65]] + \
+                [points[64]]
         } for points in landmarks_as_tuples]
     elif model == 'small':
         return [{
@@ -236,7 +289,12 @@ def face_landmarks(face_image, face_locations=None, model="large"):
         )
 
 
-def face_encodings(face_image, known_face_locations=None, num_jitters=1, model="small"):
+def face_encodings(
+        face_image,
+        known_face_locations=None,
+        num_jitters=1,
+        model="small"
+    ):
     """
     Given an image, return the 128-dimension face encoding for each face in the
     image.
@@ -252,7 +310,13 @@ def face_encodings(face_image, known_face_locations=None, num_jitters=1, model="
         image)
     """
     raw_landmarks = _raw_face_landmarks(face_image, known_face_locations, model)
-    return [np.array(face_encoder.compute_face_descriptor(face_image, raw_landmark_set, num_jitters)) for raw_landmark_set in raw_landmarks]
+    return [np.array(
+        face_encoder.compute_face_descriptor(
+            face_image,
+            raw_landmark_set,
+            num_jitters
+        )
+    ) for raw_landmark_set in raw_landmarks]
 
 
 def compare_faces(known_face_encodings, face_encoding_to_check, tolerance=0.6):
@@ -268,4 +332,9 @@ def compare_faces(known_face_encodings, face_encoding_to_check, tolerance=0.6):
     :return: A list of True/False values indicating which known_face_encodings
         match the face encoding to check
     """
-    return list(face_distance(known_face_encodings, face_encoding_to_check) <= tolerance)
+    return list(
+        face_distance(
+            known_face_encodings,
+            face_encoding_to_check
+        ) <= tolerance
+    )
